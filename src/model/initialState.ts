@@ -55,5 +55,8 @@ export function createInitialState(): EngineState {
         useInternalClock: true,
         isPlaying: false,
         ratchetsEnabled: false,
+        outputMode: 'audio',
+        masterVolume: 1.0,
+        selectedMidiOutput: null,
     };
 }

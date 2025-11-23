@@ -231,9 +231,10 @@ h1 {
   display: grid;
   grid-template-columns: 280px 1fr 280px;
   gap: 20px;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
-  /* Allow shrinking */
+  overflow: hidden;
+  max-height: calc(100vh - 200px);
 }
 
 .panel {
@@ -573,6 +574,20 @@ canvas {
   gap: 15px;
 }
 
+.transport-section .panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.transport-section .control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .transport-controls {
   display: flex;
   gap: 10px;
@@ -587,7 +602,9 @@ canvas {
 .bpm-control {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
+  padding-bottom: 10px;
+  /* Space for slider handle */
 }
 
 .bpm-control label {
@@ -614,8 +631,8 @@ input[type=number] {
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
-  /* Align left and right */
   align-items: center;
+  flex-shrink: 0;
 }
 
 .footer-left {
@@ -662,9 +679,9 @@ button,
 }
 
 .badge-text {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
-  letter-spacing: 1px;
+  letter-spacing: 4px;
 }
 
 .credits-text {

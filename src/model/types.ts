@@ -84,9 +84,12 @@ export interface Channel {
 }
 
 export interface EngineState {
-  channels: [Channel, Channel];
+  channels: Channel[];
   bpm: number;
   useInternalClock: boolean;
   isPlaying: boolean;
   ratchetsEnabled: boolean;
+  outputMode: 'audio' | 'midi';
+  masterVolume: number; // 0-1
+  selectedMidiOutput: string | null;
 }

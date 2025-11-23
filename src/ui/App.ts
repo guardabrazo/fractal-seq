@@ -45,6 +45,13 @@ export class App {
     private delayMixVal: HTMLElement;
     private delayTime: HTMLSelectElement;
 
+    // Output & MIDI
+    private outputModeSelect: HTMLSelectElement;
+    private midiDeviceSelect: HTMLSelectElement;
+    private midiDeviceRow: HTMLElement;
+    private masterVolume: HTMLInputElement;
+    private masterVolumeVal: HTMLElement;
+
     // Visualizer
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -84,6 +91,12 @@ export class App {
         this.delayMix = document.getElementById('delay-mix') as HTMLInputElement;
         this.delayMixVal = document.getElementById('delay-mix-val') as HTMLElement;
         this.delayTime = document.getElementById('delay-time') as HTMLSelectElement;
+
+        this.outputModeSelect = document.getElementById('output-mode-select') as HTMLSelectElement;
+        this.midiDeviceSelect = document.getElementById('midi-device-select') as HTMLSelectElement;
+        this.midiDeviceRow = document.getElementById('midi-device-row') as HTMLElement;
+        this.masterVolume = document.getElementById('master-volume') as HTMLInputElement;
+        this.masterVolumeVal = document.getElementById('master-volume-val') as HTMLElement;
 
         this.canvas = document.getElementById('visualizer') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
@@ -201,9 +214,34 @@ export class App {
             this.engine.setDelayMix(val);
             this.delayMixVal.textContent = val.toFixed(2);
         });
-        this.delayTime.addEventListener('change', (e) => {
-            const val = (e.target as HTMLSelectElement).value;
-            this.engine.setDelayTime(val);
+        this.delayTime.addEventListener('change', () => {
+            this.engine.setDelayTime(this.delayTime.value);
+        });
+
+        // Output mode and MIDI
+        this.outputModeSelect.addEventListener('change', () => {
+            const mode = this.outputModeSelect.value as 'audio' | 'midi';
+            this.state.outputMode = mode;
+
+            // Show/hide MIDI device selector
+            if (mode === 'midi') {
+                this.midiDeviceRow.style.display = 'flex';
+                this.populateMIDIDevices();
+            } else {
+                this.midiDeviceRow.style.display = 'none';
+            }
+        });
+
+        this.midiDeviceSelect.addEventListener('change', () => {
+            const deviceId = this.midiDeviceSelect.value;
+            this.state.selectedMidiOutput = deviceId || null;
+            this.engine.selectMIDIOutput(deviceId || null);
+        });
+
+        this.masterVolume.addEventListener('input', () => {
+            const volume = parseInt(this.masterVolume.value) / 100;
+            this.engine.setMasterVolume(volume);
+            this.masterVolumeVal.textContent = `${this.masterVolume.value}%`;
         });
 
         // Canvas Interaction - Click to toggle gate + assign random pitch
@@ -758,6 +796,30 @@ export class App {
                 const input = wrapper.querySelector('input') as HTMLInputElement;
                 if (input && input.value === '') input.value = '0';
             }
+        }
+    }
+
+    private populateMIDIDevices() {
+        const devices = this.engine.getMIDIOutputs();
+        this.midiDeviceSelect.innerHTML = '';
+
+        if (devices.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No MIDI devices';
+            this.midiDeviceSelect.appendChild(option);
+        } else {
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.id;
+                option.textContent = device.name;
+                this.midiDeviceSelect.appendChild(option);
+
+                // Select if it matches current state
+                if (device.id === this.state.selectedMidiOutput) {
+                    option.selected = true;
+                }
+            });
         }
     }
 }

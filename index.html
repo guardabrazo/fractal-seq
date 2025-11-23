@@ -267,16 +267,43 @@
         </div>
 
         <!-- Transport Controls Moved Here -->
-        <div class="transport-section">
-          <div class="transport-controls">
-            <button id="play-btn" class="btn-transport">PLAY</button>
-            <button id="stop-btn" class="btn-transport">STOP</button>
+        <section class="transport-section">
+          <div class="panel-section">
+            <div class="panel-header">OUTPUT</div>
+            <div class="control-row">
+              <label>MODE</label>
+              <select id="output-mode-select" class="control-select">
+                <option value="audio">AUDIO</option>
+                <option value="midi">MIDI</option>
+              </select>
+            </div>
+            <div class="control-row" id="midi-device-row" style="display: none;">
+              <label>DEVICE</label>
+              <select id="midi-device-select" class="control-select">
+                <option value="">No MIDI devices</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <label>VOLUME</label>
+              <div class="control-wrapper">
+                <input type="range" id="master-volume" min="0" max="100" value="100" />
+                <span class="value-display" id="master-volume-val">100%</span>
+              </div>
+            </div>
           </div>
-          <div class="bpm-control">
-            <label>BPM: <span id="bpm-display">120</span></label>
-            <input type="range" id="bpm-slider" min="40" max="300" value="120" />
+
+          <div class="panel-section">
+            <div class="panel-header">TRANSPORT</div>
+            <div class="transport-controls">
+              <button id="play-btn" class="btn-transport">PLAY</button>
+              <button id="stop-btn" class="btn-transport">STOP</button>
+            </div>
+            <div class="bpm-control">
+              <label>BPM: <span id="bpm-display">120</span></label>
+              <input type="range" id="bpm-slider" min="40" max="300" value="120" />
+            </div>
           </div>
-        </div>
+        </section>
       </aside>
     </main>
 

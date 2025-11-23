@@ -18,6 +18,12 @@ export class SequencerEngine {
 
     private reverbGain: Tone.Gain;
     private delayGain: Tone.Gain;
+    private masterGain: Tone.Gain;
+
+    // Web MIDI
+    private midiAccess: MIDIAccess | null = null;
+    private midiOutput: MIDIOutput | null = null;
+    private activeNotes: Map<number, number> = new Map(); // pitch -> MIDI note
 
     constructor(state: EngineState) {
         this.state = state;
@@ -30,7 +36,10 @@ export class SequencerEngine {
         // Add a limiter to prevent clipping
         const limiter = new Tone.Limiter(-1).toDestination();
 
-        this.filter = new Tone.Filter(2000, 'lowpass').connect(limiter);
+        // Master gain control
+        this.masterGain = new Tone.Gain(this.state.masterVolume).connect(limiter);
+
+        this.filter = new Tone.Filter(2000, 'lowpass').connect(this.masterGain);
 
         // Reverb Path
         this.reverb = new Tone.Freeverb({ roomSize: 0.7, dampening: 3000 });
@@ -68,6 +77,73 @@ export class SequencerEngine {
 
         // Set initial BPM
         Tone.Transport.bpm.value = this.state.bpm;
+
+        // Initialize Web MIDI
+        this.initMIDI();
+    }
+
+    private async initMIDI() {
+        if (navigator.requestMIDIAccess) {
+            try {
+                this.midiAccess = await navigator.requestMIDIAccess();
+            } catch (error) {
+                console.warn('Web MIDI not available:', error);
+            }
+        }
+    }
+
+    public getMIDIOutputs(): Array<{ id: string; name: string }> {
+        if (!this.midiAccess) return [];
+        const outputs: Array<{ id: string; name: string }> = [];
+        this.midiAccess.outputs.forEach((output) => {
+            outputs.push({ id: output.id!, name: output.name! });
+        });
+        return outputs;
+    }
+
+    public selectMIDIOutput(deviceId: string | null) {
+        if (!this.midiAccess) return;
+
+        if (deviceId) {
+            this.midiOutput = this.midiAccess.outputs.get(deviceId) || null;
+        } else {
+            this.midiOutput = null;
+        }
+    }
+
+    public setMasterVolume(volume: number) {
+        this.state.masterVolume = volume;
+        this.masterGain.gain.rampTo(volume, 0.05);
+    }
+
+    private triggerMIDINote(midiNote: number, durationMs: number) {
+        if (!this.midiOutput) return;
+
+        const velocity = 100;
+
+        // Note On
+        this.midiOutput.send([0x90, midiNote, velocity]);
+
+        // Store active note
+        this.activeNotes.set(midiNote, Date.now());
+
+        // Schedule Note Off
+        setTimeout(() => {
+            if (this.midiOutput) {
+                this.midiOutput.send([0x80, midiNote, 0]);
+                this.activeNotes.delete(midiNote);
+            }
+        }, durationMs);
+    }
+
+    public stopAllMIDINotes() {
+        if (!this.midiOutput) return;
+
+        // Send note off for all active notes
+        this.activeNotes.forEach((_, midiNote) => {
+            this.midiOutput!.send([0x80, midiNote, 0]);
+        });
+        this.activeNotes.clear();
     }
 
     public start() {
@@ -196,7 +272,12 @@ export class SequencerEngine {
                 duration = ratchetDuration * p;
             }
 
-            this.synth.triggerAttackRelease(freq, duration, scheduleTime);
+            // Trigger note based on output mode
+            if (this.state.outputMode === 'midi' && this.midiOutput) {
+                this.triggerMIDINote(pitch, duration * 1000); // Convert to ms
+            } else {
+                this.synth.triggerAttackRelease(freq, duration, scheduleTime);
+            }
         }
 
         // Advance state
