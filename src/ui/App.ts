@@ -124,9 +124,17 @@ export class App {
 
         // Fractal Controls
         this.branchesSlider.addEventListener('input', (e) => {
-            const val = parseInt((e.target as HTMLInputElement).value);
-            this.pattern.branchesCount = val;
+            this.pattern.branchesCount = parseInt((e.target as HTMLInputElement).value);
             this.branchesVal.textContent = this.pattern.branchesCount.toString();
+
+            // Update path slider step based on number of branches
+            const numPaths = Math.pow(2, this.pattern.branchesCount);
+            if (numPaths > 1) {
+                this.pathSlider.step = (1 / (numPaths - 1)).toString();
+            } else {
+                this.pathSlider.step = '1';
+            }
+
             this.regenerateTree();
         });
         this.pathSlider.addEventListener('input', (e) => {
@@ -155,6 +163,7 @@ export class App {
         this.lengthInput.addEventListener('change', (e) => {
             const len = parseInt((e.target as HTMLInputElement).value);
             this.pattern.trunk.length = Math.max(1, Math.min(32, len));
+            this.regenerateTree();
         });
 
         const ratchetsToggle = document.getElementById('ratchets-toggle') as HTMLInputElement;
@@ -372,6 +381,8 @@ export class App {
         // Clear background
         ctx.clearRect(0, 0, w, h);
 
+        const engineStepIndex = this.engine.getCurrentStepIndex();
+
         const tree = this.channel.generatedTree;
         if (!tree) return;
 
@@ -469,9 +480,13 @@ export class App {
                     const pathBit = pathBits[d];
                     const isLeftActive = (pathBit === '0');
 
-                    // Only highlight if the PARENT is active AND this is the correct branch
-                    const highlightLeft = isActive && isLeftActive;
-                    const highlightRight = isActive && !isLeftActive;
+                    // Get current step to check for gate
+                    const step = steps[s];
+                    const hasGate = step ? step.gateOn : false;
+
+                    // Only highlight if the PARENT is active AND this is the correct branch AND the step has a gate
+                    const highlightLeft = isActive && isLeftActive && hasGate;
+                    const highlightRight = isActive && !isLeftActive && hasGate;
 
                     ctx.beginPath();
                     ctx.moveTo(sx, sy);
@@ -505,7 +520,8 @@ export class App {
             }
 
             // Determine if this ring is currently active (playing)
-            const engineStepIndex = this.engine.getCurrentStepIndex();
+            // Determine if this ring is currently active (playing)
+            // engineStepIndex is already defined at top of draw()
             let isRingActive = false;
             if (engineStepIndex !== -1) {
                 if (this.channel.activeSequence && this.channel.activeSequence.steps.length > 0) {
@@ -556,14 +572,27 @@ export class App {
                     const sx = centerX + Math.cos(angle) * radius;
                     const sy = centerY + Math.sin(angle) * radius;
 
+                    // Check if parent has a gate (for branches only)
+                    let parentHasGate = true;
+                    if (d > 0 && isActiveSegment) {
+                        // Parent is at depth d-1, same step index s
+                        // Need to find which segment at d-1 is the parent
+                        const parentSegmentIndex = Math.floor(i / 2);
+                        const parentNode = nodesByDepth[d - 1][parentSegmentIndex];
+                        if (parentNode && parentNode.sequence.steps[s]) {
+                            parentHasGate = parentNode.sequence.steps[s].gateOn;
+                        }
+                    }
+
                     // Highlight Logic
                     // If this step is in the active path (isActiveSegment) AND this ring is active, make it bright
                     // If just in active path, make it semi-bright
+                    // But only if parent has a gate
 
                     let stepColor = '#111';
                     let strokeColor = '#666';
 
-                    if (isActiveSegment) {
+                    if (isActiveSegment && parentHasGate) {
                         strokeColor = '#fff';
                         if (step.gateOn) stepColor = '#aaa';
 
@@ -598,7 +627,8 @@ export class App {
         }
 
         // Draw Playhead
-        const engineStepIndex = this.engine.getCurrentStepIndex();
+        // Draw Playhead
+        // engineStepIndex is already defined at top of draw()
 
         if (engineStepIndex !== -1) {
             const totalPathSteps = (maxDepth + 1) * seqLen;

@@ -31,9 +31,9 @@ function createDefaultPattern(): Pattern {
         rootOffsetSemitones: 0,
         divMult: 1,
         branchConfig: [
-            { left: 'transpose', right: 'transpose', leftParam: 7, rightParam: -5 }, // Depth 1
-            { left: 'invert', right: 'transpose', leftParam: 0, rightParam: -12 },   // Depth 2
-            { left: 'mutate', right: 'mutate', leftParam: 2, rightParam: 12 },       // Depth 3
+            { left: 'transpose', right: 'transpose', leftParam: 3, rightParam: -3 },   // Depth 1: minor third up/down
+            { left: 'invert', right: 'transpose', leftParam: 0, rightParam: 7 },        // Depth 2: invert left, fifth up right
+            { left: 'mutate', right: 'invert', leftParam: 3, rightParam: 0 },           // Depth 3: mutate left, invert right
         ],
         branchPlaybackOrder: 'forward',
     };
