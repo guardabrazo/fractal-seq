@@ -654,34 +654,41 @@ button,
 
 .badge-box {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  border: 1px solid var(--text-dim);
-  padding: 5px 10px;
-  border-radius: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: none;
+  padding: 0;
 }
 
-.social-icons {
+.footer-links {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-dim);
 }
 
-.social-icon {
-  width: 14px;
-  height: 14px;
-  fill: var(--text-dim);
-  transition: fill 0.2s;
+.footer-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
-.social-icon:hover {
-  fill: var(--text-color);
+.footer-links a:hover {
+  color: var(--text-color);
+}
+
+.separator {
+  color: var(--text-dim);
+  opacity: 0.5;
 }
 
 .badge-text {
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 400;
-  letter-spacing: 4px;
+  letter-spacing: 1px;
+  color: var(--text-color);
 }
 
 .credits-text {
