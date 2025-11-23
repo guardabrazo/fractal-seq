@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import type { Channel, EngineState, GateLengthKind, Sequence, Step } from '../model/types';
+import type { Channel, EngineState, Sequence } from '../model/types';
 import { buildPlaybackSequence, quantizePitch } from './FractalTree';
 
 export class SequencerEngine {
@@ -8,7 +8,7 @@ export class SequencerEngine {
     private filter: Tone.Filter;
     private reverb: Tone.Freeverb;
     private delay: Tone.FeedbackDelay;
-    private loopId: number | null = null;
+    private _loopId: number | null = null;
     private channelState: {
         currentBaseStep: number;
         currentRatchetCount: number;
@@ -74,7 +74,7 @@ export class SequencerEngine {
         // Schedule the loop
         // We'll use a fast interval to check if we need to schedule the next step
         // This is a custom scheduler to handle variable step lengths (ratchets) and div/mults
-        this.loopId = Tone.Transport.scheduleRepeat((time) => {
+        this._loopId = Tone.Transport.scheduleRepeat((time) => {
             this.tick(time);
         }, "32n"); // Check every 32nd note
     }
@@ -83,7 +83,7 @@ export class SequencerEngine {
         Tone.Transport.stop();
         Tone.Transport.cancel();
         this.state.isPlaying = false;
-        this.loopId = null;
+        this._loopId = null;
 
         // Reset state
         this.channelState.currentBaseStep = 0;

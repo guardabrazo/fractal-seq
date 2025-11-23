@@ -1,8 +1,8 @@
 import * as Tone from 'tone';
 import { SequencerEngine } from '../audio/SequencerEngine';
-import { generateTreeForChannel, applyMutationToTrunk, buildPlaybackSequence, getEffectivePathValue } from '../audio/FractalTree';
+import { generateTreeForChannel, buildPlaybackSequence, getEffectivePathValue } from '../audio/FractalTree';
 import { createInitialState } from '../model/initialState';
-import type { EngineState, Channel, Pattern, ScaleName, PlaybackOrder, TreeNode, Step } from '../model/types';
+import type { EngineState, Channel, Pattern, ScaleName, PlaybackOrder, TreeNode } from '../model/types';
 
 export class App {
     private state: EngineState;
@@ -24,7 +24,7 @@ export class App {
     private randomizeBtn: HTMLButtonElement;
 
     // Branch Behavior
-    private branchConfigContainer: HTMLElement;
+    private _branchConfigContainer: HTMLElement;
 
     // Sequence Settings
     private scaleSelect: HTMLSelectElement;
@@ -66,7 +66,7 @@ export class App {
         this.branchPlaybackSelect = document.getElementById('branch-playback-select') as HTMLSelectElement;
         this.randomizeBtn = document.getElementById('randomize-btn') as HTMLButtonElement;
 
-        this.branchConfigContainer = document.getElementById('branch-config-container') as HTMLElement;
+        this._branchConfigContainer = document.getElementById('branch-config-container') as HTMLElement;
 
         this.scaleSelect = document.getElementById('scale-select') as HTMLSelectElement;
         this.orderSelect = document.getElementById('order-select') as HTMLSelectElement;
@@ -631,7 +631,7 @@ export class App {
         // engineStepIndex is already defined at top of draw()
 
         if (engineStepIndex !== -1) {
-            const totalPathSteps = (maxDepth + 1) * seqLen;
+
 
             // Use the cached active sequence to determine the exact step being played
             // The engineStepIndex corresponds to the index in activeSequence.steps
@@ -739,8 +739,8 @@ export class App {
     }
 
     private handleBranchSelectChange(select: HTMLSelectElement) {
-        const level = select.dataset.level!;
-        const side = select.dataset.side!;
+        const _level = select.dataset.level!;
+        const _side = select.dataset.side!;
         const val = select.value;
 
         // Find corresponding stepper wrapper
