@@ -8,7 +8,7 @@ export class SequencerEngine {
     private filter: Tone.Filter;
     private reverb: Tone.Freeverb;
     private delay: Tone.FeedbackDelay;
-    private _loopId: number | null = null;
+    private loopId: number | null = null;
     private channelState: {
         currentBaseStep: number;
         currentRatchetCount: number;
@@ -23,11 +23,14 @@ export class SequencerEngine {
         this.state = state;
 
         // Setup audio chain: Parallel Effects
-        // Synth -> Filter -> Destination (Dry)
+        // Synth -> Filter -> Limiter -> Destination (Dry)
         // Synth -> Delay -> DelayGain -> Filter (Wet)
         // Synth -> Reverb -> ReverbGain -> Filter (Wet)
 
-        this.filter = new Tone.Filter(2000, 'lowpass').toDestination();
+        // Add a limiter to prevent clipping
+        const limiter = new Tone.Limiter(-1).toDestination();
+
+        this.filter = new Tone.Filter(2000, 'lowpass').connect(limiter);
 
         // Reverb Path
         this.reverb = new Tone.Freeverb({ roomSize: 0.7, dampening: 3000 });
@@ -52,6 +55,9 @@ export class SequencerEngine {
         this.synth.connect(this.reverb);
         this.synth.connect(this.delay);
 
+        // Reduce overall synth volume to prevent clipping
+        this.synth.volume.value = -12; // Reduce by 12dB
+
         // Initialize single channel state
         this.channelState = {
             currentBaseStep: 0,
@@ -74,7 +80,7 @@ export class SequencerEngine {
         // Schedule the loop
         // We'll use a fast interval to check if we need to schedule the next step
         // This is a custom scheduler to handle variable step lengths (ratchets) and div/mults
-        this._loopId = Tone.Transport.scheduleRepeat((time) => {
+        this.loopId = Tone.Transport.scheduleRepeat((time) => {
             this.tick(time);
         }, "32n"); // Check every 32nd note
     }
@@ -83,7 +89,7 @@ export class SequencerEngine {
         Tone.Transport.stop();
         Tone.Transport.cancel();
         this.state.isPlaying = false;
-        this._loopId = null;
+        this.loopId = null;
 
         // Reset state
         this.channelState.currentBaseStep = 0;

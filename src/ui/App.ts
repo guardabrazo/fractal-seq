@@ -24,7 +24,7 @@ export class App {
     private randomizeBtn: HTMLButtonElement;
 
     // Branch Behavior
-    private _branchConfigContainer: HTMLElement;
+    private branchConfigContainer: HTMLElement;
 
     // Sequence Settings
     private scaleSelect: HTMLSelectElement;
@@ -66,7 +66,7 @@ export class App {
         this.branchPlaybackSelect = document.getElementById('branch-playback-select') as HTMLSelectElement;
         this.randomizeBtn = document.getElementById('randomize-btn') as HTMLButtonElement;
 
-        this._branchConfigContainer = document.getElementById('branch-config-container') as HTMLElement;
+        this.branchConfigContainer = document.getElementById('branch-config-container') as HTMLElement;
 
         this.scaleSelect = document.getElementById('scale-select') as HTMLSelectElement;
         this.orderSelect = document.getElementById('order-select') as HTMLSelectElement;
@@ -631,7 +631,7 @@ export class App {
         // engineStepIndex is already defined at top of draw()
 
         if (engineStepIndex !== -1) {
-
+            const totalPathSteps = (maxDepth + 1) * seqLen;
 
             // Use the cached active sequence to determine the exact step being played
             // The engineStepIndex corresponds to the index in activeSequence.steps
@@ -739,8 +739,8 @@ export class App {
     }
 
     private handleBranchSelectChange(select: HTMLSelectElement) {
-        const _level = select.dataset.level!;
-        const _side = select.dataset.side!;
+        const level = select.dataset.level!;
+        const side = select.dataset.side!;
         const val = select.value;
 
         // Find corresponding stepper wrapper
