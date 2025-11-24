@@ -250,13 +250,17 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 10px;
+  color: var(--accent-color);
 }
 
 .panel-title {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--text-dim);
+  color: var(--accent-color);
 }
 
 /* Tooltips */
@@ -568,7 +572,7 @@ canvas {
   margin-top: auto;
   /* Push to bottom */
   padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  /* border-top: 1px solid var(--border-color); */
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -797,6 +801,8 @@ button,
     display: flex;
     flex-direction: column;
     gap: 15px;
+    max-height: none;
+    overflow: visible;
   }
 
   .canvas-center {
