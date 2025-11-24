@@ -1,4 +1,4 @@
-import type { Channel, EngineState, Pattern, Sequence, Step } from './types';
+import type { Channel, EngineState, Pattern, Sequence, Step, GateLengthKind } from './types';
 
 function createDefaultStep(): Step {
     return {
@@ -39,18 +39,44 @@ function createDefaultPattern(): Pattern {
     };
 }
 
-function createChannel(id: 1 | 2): Channel {
+function createRandomTrunk(): Sequence {
+    const steps = Array.from({ length: 32 }, () => {
+        const isNote = Math.random() > 0.6; // 40% chance of note
+        return {
+            pitch: Math.floor(Math.random() * 24) - 12, // -12 to +11
+            gateOn: isNote,
+            ratchets: 1,
+            slew: 0,
+            gateLength: (Math.random() > 0.8 ? 'p90' : 'p50') as GateLengthKind,
+        };
+    });
+
+    return {
+        steps,
+        length: 8,
+        scale: 'minor',
+        playbackOrder: 'forward',
+    };
+}
+
+function createChannel(id: 1 | 2, randomizeFirst: boolean = false): Channel {
+    const patterns = Array.from({ length: 8 }, createDefaultPattern);
+
+    if (randomizeFirst) {
+        patterns[0].trunk = createRandomTrunk();
+    }
+
     return {
         id,
         currentPatternIndex: 0,
-        patterns: Array.from({ length: 8 }, createDefaultPattern),
+        patterns,
         generatedTree: null,
     };
 }
 
 export function createInitialState(): EngineState {
     return {
-        channels: [createChannel(1), createChannel(2)],
+        channels: [createChannel(1, true), createChannel(2, false)],
         bpm: 120,
         useInternalClock: true,
         isPlaying: false,
