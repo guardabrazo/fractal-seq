@@ -86,16 +86,13 @@ export class SequencerEngine {
         if (navigator.requestMIDIAccess) {
             try {
                 this.midiAccess = await navigator.requestMIDIAccess();
-                console.log('Web MIDI Initialized. Outputs found:', this.midiAccess.outputs.size);
-                this.midiAccess.outputs.forEach(output => {
-                    console.log(`- MIDI Output: ${output.name} (ID: ${output.id})`);
-                });
+
 
                 // Auto-select first output if available
                 if (this.midiAccess.outputs.size > 0) {
                     const firstOutput = this.midiAccess.outputs.values().next().value;
                     if (firstOutput) {
-                        console.log(`Auto-selecting MIDI Output: ${firstOutput.name}`);
+
                         this.selectMIDIOutput(firstOutput.id);
                     }
                 }
@@ -125,7 +122,7 @@ export class SequencerEngine {
         if (deviceId) {
             this.midiOutput = this.midiAccess.outputs.get(deviceId) || null;
             if (this.midiOutput) {
-                console.log(`MIDI Output Selected: ${this.midiOutput.name}`);
+
                 this.state.selectedMidiOutput = deviceId; // Sync state
             } else {
                 console.warn(`MIDI Output with ID ${deviceId} not found`);
@@ -133,7 +130,7 @@ export class SequencerEngine {
         } else {
             this.midiOutput = null;
             this.state.selectedMidiOutput = null; // Sync state
-            console.log('MIDI Output Deselected');
+
         }
     }
 
@@ -148,7 +145,7 @@ export class SequencerEngine {
             return;
         }
 
-        console.log(`Triggering MIDI Note: ${midiNote} on ${this.midiOutput.name} at ${scheduleTime}`);
+
 
         const velocity = 127; // Max velocity as per reference
 
