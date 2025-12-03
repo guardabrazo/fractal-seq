@@ -234,13 +234,13 @@ h1 {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  max-height: calc(100vh - 200px);
 }
 
 .panel {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100%;
 }
 
 .panel-header {
@@ -607,7 +607,7 @@ canvas {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 10px;
+  padding-bottom: 25px;
   /* Space for slider handle */
 }
 

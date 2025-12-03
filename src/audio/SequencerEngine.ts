@@ -86,9 +86,24 @@ export class SequencerEngine {
         if (navigator.requestMIDIAccess) {
             try {
                 this.midiAccess = await navigator.requestMIDIAccess();
+                console.log('Web MIDI Initialized. Outputs found:', this.midiAccess.outputs.size);
+                this.midiAccess.outputs.forEach(output => {
+                    console.log(`- MIDI Output: ${output.name} (ID: ${output.id})`);
+                });
+
+                // Auto-select first output if available
+                if (this.midiAccess.outputs.size > 0) {
+                    const firstOutput = this.midiAccess.outputs.values().next().value;
+                    if (firstOutput) {
+                        console.log(`Auto-selecting MIDI Output: ${firstOutput.name}`);
+                        this.selectMIDIOutput(firstOutput.id);
+                    }
+                }
             } catch (error) {
                 console.warn('Web MIDI not available:', error);
             }
+        } else {
+            console.warn('navigator.requestMIDIAccess is not defined');
         }
     }
 
@@ -102,12 +117,23 @@ export class SequencerEngine {
     }
 
     public selectMIDIOutput(deviceId: string | null) {
-        if (!this.midiAccess) return;
+        if (!this.midiAccess) {
+            console.warn('Cannot select MIDI output: MIDI Access not initialized');
+            return;
+        }
 
         if (deviceId) {
             this.midiOutput = this.midiAccess.outputs.get(deviceId) || null;
+            if (this.midiOutput) {
+                console.log(`MIDI Output Selected: ${this.midiOutput.name}`);
+                this.state.selectedMidiOutput = deviceId; // Sync state
+            } else {
+                console.warn(`MIDI Output with ID ${deviceId} not found`);
+            }
         } else {
             this.midiOutput = null;
+            this.state.selectedMidiOutput = null; // Sync state
+            console.log('MIDI Output Deselected');
         }
     }
 
@@ -116,24 +142,41 @@ export class SequencerEngine {
         this.masterGain.gain.rampTo(volume, 0.05);
     }
 
-    private triggerMIDINote(midiNote: number, durationMs: number) {
-        if (!this.midiOutput) return;
+    private triggerMIDINote(midiNote: number, durationMs: number, scheduleTime: number) {
+        if (!this.midiOutput) {
+            console.warn('Attempted to trigger MIDI note but no output selected');
+            return;
+        }
 
-        const velocity = 100;
+        console.log(`Triggering MIDI Note: ${midiNote} on ${this.midiOutput.name} at ${scheduleTime}`);
+
+        const velocity = 127; // Max velocity as per reference
+
+        // Calculate MIDI timestamp
+        // scheduleTime is in seconds (AudioContext time)
+        // performance.now() is in milliseconds
+        // We need to calculate the delay from 'now' and apply it to performance.now()
+        const now = Tone.now();
+        const delaySeconds = scheduleTime - now;
+        const midiTimestamp = performance.now() + (delaySeconds * 1000);
+
+        // Ensure we don't schedule in the past (though send() handles it, good to be explicit)
+        const timestamp = Math.max(performance.now(), midiTimestamp);
 
         // Note On
-        this.midiOutput.send([0x90, midiNote, velocity]);
+        this.midiOutput.send([0x90, midiNote, velocity], timestamp);
 
-        // Store active note
+        // Store active note (just for tracking, not for scheduling off anymore)
         this.activeNotes.set(midiNote, Date.now());
 
         // Schedule Note Off
+        const noteOffTimestamp = timestamp + durationMs;
+        this.midiOutput.send([0x80, midiNote, 0], noteOffTimestamp);
+
+        // Cleanup active note map after duration (approximate is fine for this)
         setTimeout(() => {
-            if (this.midiOutput) {
-                this.midiOutput.send([0x80, midiNote, 0]);
-                this.activeNotes.delete(midiNote);
-            }
-        }, durationMs);
+            this.activeNotes.delete(midiNote);
+        }, durationMs + (delaySeconds * 1000) + 100);
     }
 
     public stopAllMIDINotes() {
@@ -274,7 +317,7 @@ export class SequencerEngine {
 
             // Trigger note based on output mode
             if (this.state.outputMode === 'midi' && this.midiOutput) {
-                this.triggerMIDINote(pitch, duration * 1000); // Convert to ms
+                this.triggerMIDINote(pitch, duration * 1000, scheduleTime); // Convert to ms
             } else {
                 this.synth.triggerAttackRelease(freq, duration, scheduleTime);
             }
